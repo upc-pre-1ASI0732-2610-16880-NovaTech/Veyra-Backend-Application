@@ -99,16 +99,14 @@ public class WebSecurityConfiguration {
         cors.setAllowedOrigins(List.of(
           "https://veyra-frontend-application.web.app",
           "http://localhost:5173",
-          "http://localhost:3000"
+          "http://localhost:3000",
+          "http://localhost:4200"
         ));
 
-        // 2. Incluir explícitamente "OPTIONS" para las peticiones preflight de CORS
         cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 
-        // 3. Permitir las cabeceras (como Authorization para tu Bearer token)
         cors.setAllowedHeaders(List.of("*"));
 
-        // 4. Habilitar credenciales (necesario cuando usas autenticación y dominios específicos)
         cors.setAllowCredentials(true);
         return cors;
       }));
@@ -125,7 +123,9 @@ public class WebSecurityConfiguration {
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/swagger-resources/**",
-            "/webjars/**").permitAll()
+            "/webjars/**",
+            "/error"
+          ).permitAll()
           .anyRequest().authenticated());
 
       http.authenticationProvider(authenticationProvider());
