@@ -47,20 +47,43 @@ public class AuthenticationController {
      * @param signInResource the sign-in request body.
      * @return the authenticated user resource.
      */
-    @PostMapping("/sign-in")
-    @Operation(summary = "Sign-in", description = "Sign-in with the provided credentials.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User authenticated successfully."),
-            @ApiResponse(responseCode = "404", description = "User not found.")})
-    public ResponseEntity<AuthenticatedUserResource> signIn(@RequestBody SignInResource signInResource) {
-        var signInCommand = SignInCommandFromResourceAssembler.toCommandFromResource(signInResource);
-        var authenticatedUser = userCommandService.handle(signInCommand);
-        if (authenticatedUser.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        var authenticatedUserResource = AuthenticatedUserResourceFromEntityAssembler.toResourceFromEntity(authenticatedUser.get().getLeft(), authenticatedUser.get().getRight());
-        return ResponseEntity.ok(authenticatedUserResource);
+  /**
+   * Handles the sign-in request.
+   * @param signInResource the sign-in request body.
+   * @return the authenticated user resource.
+   */
+  @PostMapping("/sign-in")
+  @Operation(summary = "Sign-in", description = "Sign-in with the provided credentials.")
+  @ApiResponses(value = {
+    @ApiResponse(responseCode = "200", description = "User authenticated successfully."),
+    @ApiResponse(responseCode = "404", description = "User not found."),
+    @ApiResponse(responseCode = "500", description = "Internal Server Error.")})
+  public ResponseEntity<?> signIn(@RequestBody SignInResource signInResource) { // <-- Cambiado a ResponseEntity<?>
+    try {
+      var signInCommand = SignInCommandFromResourceAssembler.toCommandFromResource(signInResource);
+      var authenticatedUser = userCommandService.handle(signInCommand);
+
+      if (authenticatedUser.isEmpty()) {
+        return ResponseEntity.notFound().build();
+      }
+
+      var authenticatedUserResource = AuthenticatedUserResourceFromEntityAssembler.toResourceFromEntity(
+        authenticatedUser.get().getLeft(),
+        authenticatedUser.get().getRight()
+      );
+
+      return ResponseEntity.ok(authenticatedUserResource);
+
+    } catch (Exception e) {
+      // ¡ESTA ES LA TRAMPA PARA EL ERROR!
+      System.err.println("========== ERROR CRÍTICO EN SIGN-IN ==========");
+      e.printStackTrace();
+      System.err.println("==============================================");
+
+      // Devolvemos el mensaje de error directamente a Swagger/Frontend
+      return ResponseEntity.internalServerError().body("Error interno al hacer Sign-In: " + e.getMessage());
     }
+  }
 
     /**
      * Handles the sign-up request.
