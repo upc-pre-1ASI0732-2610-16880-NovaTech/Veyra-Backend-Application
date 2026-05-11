@@ -8,7 +8,7 @@ public record UpdateStaffResource(String dni, String firstName, String lastName,
                                   String city,
                                   String postalCode,
                                   String country,
-                                  String photoBase64, String phoneNumber
+                                  String photo, String phoneNumber
         , String emergencyContactFirstName,
                                   String emergencyContactLastName,
                                   String emergencyContactPhoneNumber) {
