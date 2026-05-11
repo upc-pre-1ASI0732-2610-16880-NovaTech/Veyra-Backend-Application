@@ -39,7 +39,7 @@ public record CreateResidentResource(
         String country,
 
         @NotBlank(message = "Photo data is required")
-        String photoBase64,
+        String photo,
 
         @NotBlank(message = "Phone number is required")
         String phoneNumber,
