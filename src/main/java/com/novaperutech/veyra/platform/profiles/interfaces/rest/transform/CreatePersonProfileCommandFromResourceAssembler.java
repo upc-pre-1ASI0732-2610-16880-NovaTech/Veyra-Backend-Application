@@ -8,7 +8,7 @@ import java.util.Base64;
 public class CreatePersonProfileCommandFromResourceAssembler {
 
     public static CreatePersonProfileCommand toCommandFromResource(CreatePersonProfileResource resource) {
-        byte[] photoBytes = decodeBase64Photo(resource.photoBase64());
+        byte[] photoBytes = decodeBase64Photo(resource.photo());
         String photoFileName = generatePhotoFileName(resource.dni());
 
         return new CreatePersonProfileCommand(
