@@ -14,8 +14,8 @@ public class UpdatePersonProfileCommandFromResourceAssembler {
         byte[] photoBytes = null;
         String photoFileName = null;
 
-        if (resource.photoBase64() != null && !resource.photoBase64().isEmpty()) {
-            photoBytes = decodeBase64Photo(resource.photoBase64());
+        if (resource.photo() != null && !resource.photo().isEmpty()) {
+            photoBytes = decodeBase64Photo(resource.photo());
             photoFileName = generatePhotoFileName(resource.dni());
         }
 
