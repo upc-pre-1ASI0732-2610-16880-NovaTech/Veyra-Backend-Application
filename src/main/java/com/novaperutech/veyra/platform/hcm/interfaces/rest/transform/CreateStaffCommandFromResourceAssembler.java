@@ -8,7 +8,7 @@ import java.util.Base64;
 public class CreateStaffCommandFromResourceAssembler {
     public static CreateStaffCommand toCommandFromResource(CreateStaffResource resource,Long nursingHomeId)
     {
-        byte[] photoBytes = decodeBase64Photo(resource.photoBase64());
+        byte[] photoBytes = decodeBase64Photo(resource.photo());
         String photoFileName = generatePhotoFileName(resource.dni());
         return new CreateStaffCommand(nursingHomeId,resource.dni(),resource.firstName(),resource.lastName(),resource.birthDate(),resource.age(),resource.emailAddress()
         ,resource.street(),resource.number(),resource.city(),resource.postalCode(),resource.country(),photoBytes,photoFileName,resource.phoneNumber(),

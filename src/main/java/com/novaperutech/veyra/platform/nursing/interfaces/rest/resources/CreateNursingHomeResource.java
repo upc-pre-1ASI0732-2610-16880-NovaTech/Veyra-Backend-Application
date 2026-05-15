@@ -18,6 +18,6 @@ public record CreateNursingHomeResource(@NotBlank(message = "BusinessName is req
 
                                         @NotBlank(message = " Country is required" ) String country,
 
-                                        @NotBlank(message = " Photo is required" ) String photoBase64,
+                                        @NotBlank(message = " Photo is required" ) String photo,
 
                                         @NotBlank(message = "Ruc  is required" ) String ruc) {}

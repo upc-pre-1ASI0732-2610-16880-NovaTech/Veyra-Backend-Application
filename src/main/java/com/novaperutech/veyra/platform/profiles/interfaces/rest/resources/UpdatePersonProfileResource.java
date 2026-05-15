@@ -6,5 +6,5 @@ public record UpdatePersonProfileResource(String dni, String firstName, String l
                                           String number,
                                           String city,
                                           String postalCode,
-                                          String country ,String photoBase64,String phoneNumber) {
+                                          String country ,String photo,String phoneNumber) {
 }
