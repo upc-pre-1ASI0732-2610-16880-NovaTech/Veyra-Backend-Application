@@ -1,7 +1,8 @@
 Feature: Family Portal Activity Viewing
 
-  Scenario: Family member checks daily activities
+  Scenario: Family member sends a direct question to the staff
     Given the family member is authenticated in the family portal
-    And their account is linked to an active resident
-    When the family member navigates to the "Daily Logs" section
-    Then the system should display a chronological list of the resident's activities for the current day
+    And is viewing their relative's profile
+    When the family member submits a question via the direct message form
+    Then the system should send the message to the assigned staff member
+    And the system should display a "Message sent successfully" confirmation
