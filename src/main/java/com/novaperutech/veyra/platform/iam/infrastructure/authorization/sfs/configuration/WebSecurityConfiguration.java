@@ -92,7 +92,7 @@ public class WebSecurityConfiguration {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-      http.cors(configurer -> configurer.configurationSource(_ -> {
+      http.cors(configurer -> configurer.configurationSource(request -> {
         var cors = new CorsConfiguration();
         // 1. Especificar el origen exacto (reemplazar el "*")
         // (He añadido localhost por si necesitas hacer pruebas locales en el futuro)
