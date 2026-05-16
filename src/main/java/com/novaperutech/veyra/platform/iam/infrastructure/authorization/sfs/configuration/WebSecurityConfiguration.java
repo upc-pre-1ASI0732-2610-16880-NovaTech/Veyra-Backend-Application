@@ -92,33 +92,46 @@ public class WebSecurityConfiguration {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(configurer -> configurer.configurationSource(request -> {
-            var cors = new CorsConfiguration();
-            cors.setAllowedOrigins(List.of("*"));
-            cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE","PATCH"));
-            cors.setAllowedHeaders(List.of("*"));
-            return cors;
-        }));
-        http.csrf(csrfConfigurer -> csrfConfigurer.disable())
-                .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(unauthorizedRequestHandler))
-                .sessionManagement( customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers(
-                                "/api/v1/authentication/**",
-                                "/api/v1/administrators/**",
-                                "/api/v1/relatives/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/swagger-resources/**",
-                                "/webjars/**").permitAll()
-                        .anyRequest().authenticated());
-        http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(authorizationRequestFilter(), UsernamePasswordAuthenticationFilter.class);
-        return http.build();
+      http.cors(configurer -> configurer.configurationSource(_ -> {
+        var cors = new CorsConfiguration();
+        // 1. Especificar el origen exacto (reemplazar el "*")
+        // (He añadido localhost por si necesitas hacer pruebas locales en el futuro)
+        cors.setAllowedOrigins(List.of(
+          "https://veyra-frontend-application.web.app",
+          "http://localhost:5173",
+          "http://localhost:3000",
+          "http://localhost:4200"
+        ));
 
+        cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+
+        cors.setAllowedHeaders(List.of("*"));
+
+        cors.setAllowCredentials(true);
+        return cors;
+      }));
+
+      http.csrf(csrfConfigurer -> csrfConfigurer.disable())
+        .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(unauthorizedRequestHandler))
+        .sessionManagement( customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+          .requestMatchers(
+            "/api/v1/authentication/**",
+            "/api/v1/administrators/**",
+            "/api/v1/relatives/**",
+            "/v3/api-docs/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/swagger-resources/**",
+            "/webjars/**",
+            "/error"
+          ).permitAll()
+          .anyRequest().authenticated());
+
+      http.authenticationProvider(authenticationProvider());
+      http.addFilterBefore(authorizationRequestFilter(), UsernamePasswordAuthenticationFilter.class);
+      return http.build();
     }
-
     /**
      * This is the constructor of the class.
      * @param userDetailsService The user details service

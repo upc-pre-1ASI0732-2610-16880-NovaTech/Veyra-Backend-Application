@@ -7,7 +7,7 @@ import java.util.Base64;
 
 public class CreateBusinessProfileCommandFromResourceAssembler {
     public static CreateBusinessProfileCommand toCommandFromResource(CreateBusinessProfileResource resource){
-        byte[] photoBytes = decodeBase64Photo(resource.photoBase64());
+        byte[] photoBytes = decodeBase64Photo(resource.photo());
         String photoFileName = generatePhotoFileName(resource.ruc());
         return new CreateBusinessProfileCommand(
                 resource.businessName(),

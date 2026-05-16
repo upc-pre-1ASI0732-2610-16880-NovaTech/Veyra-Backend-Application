@@ -9,7 +9,7 @@ public class CreateNursingHomeCommandFromResourceAssembler {
 
     public static CreateNursingHomeCommand toCommandFromResource(CreateNursingHomeResource resource,Long adminId)
     {
-        byte[] photoBytes = decodeBase64Photo(resource.photoBase64());
+        byte[] photoBytes = decodeBase64Photo(resource.photo());
         String photoFileName = generatePhotoFileName(resource.ruc());
         return new CreateNursingHomeCommand(adminId,resource.businessName(),resource.emailAddress(),resource.phoneNumber(),resource.street()
         ,resource.number(),resource.city(),resource.postalCode(),resource.country(),photoBytes,photoFileName,resource.ruc());
