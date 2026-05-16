@@ -130,7 +130,7 @@ class CoreIntegrationTests {
               "city": "Lima",
               "postalCode": "15001",
               "country": "Peru",
-              "photoBase64": "aGVsbG8=",
+              "photo": "aGVsbG8=",
               "ruc": "%s"
             }
         """.formatted(unique, unique, ruc);
@@ -168,7 +168,7 @@ class CoreIntegrationTests {
               "city": "Lima",
               "postalCode": "15003",
               "country": "Peru",
-              "photoBase64": "aGVsbG8=",
+              "photo": "aGVsbG8=",
               "phoneNumber": "955444333",
               "legalRepresentativeFirstName": "Ana",
               "legalRepresentativeLastName": "Fernandez",
@@ -297,7 +297,7 @@ class CoreIntegrationTests {
               "city": "Lima",
               "postalCode": "15001",
               "country": "Peru",
-              "photoBase64": "aGVsbG8=",
+              "photo": "aGVsbG8=",
               "ruc": "%s"
             }
         """.formatted(unique, unique, ruc);
@@ -334,7 +334,7 @@ class CoreIntegrationTests {
               "city": "Lima",
               "postalCode": "15002",
               "country": "Peru",
-              "photoBase64": "aGVsbG8=",
+              "photo": "aGVsbG8=",
               "phoneNumber": "988777666",
               "legalRepresentativeFirstName": "Lucia",
               "legalRepresentativeLastName": "Ramirez",
