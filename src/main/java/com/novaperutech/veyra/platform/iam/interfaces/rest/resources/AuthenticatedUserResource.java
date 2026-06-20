@@ -4,11 +4,7 @@ import java.util.List;
 
 /**
  * Resource representing an authenticated user.
- *
- * @param id       the unique identifier of the user
- * @param username the username of the user
- * @param token    the authentication token
+ * When mfaRequired is true, token is empty — the client must call POST /api/v1/authentication/mfa/verify
+ * with the userId and a valid TOTP code to receive the actual JWT.
  */
-public record AuthenticatedUserResource(Long id, String username, List<String> roles, String token) {
-
-}
+public record AuthenticatedUserResource(Long id, String username, List<String> roles, String token, boolean mfaRequired) {}
