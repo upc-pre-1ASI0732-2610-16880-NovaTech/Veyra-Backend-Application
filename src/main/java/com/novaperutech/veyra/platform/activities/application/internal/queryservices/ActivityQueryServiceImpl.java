@@ -46,8 +46,8 @@ public class ActivityQueryServiceImpl implements ActivityQueryService {
 
         Resident resident = activity.getResident();
         Staff staff = activity.getStaff();
-        String residentName = "Residente " + resident.getId();
-        String attendantName = "Staff " + staff.getId();
+        String residentName = resident != null ? "Residente " + resident.getId() : "Residente " + activity.getResidentId();
+        String attendantName = staff != null ? "Staff " + staff.getId() : "Staff " + activity.getStaffMemberId();
 
         return new ActivityView(
                 activity.getId(),

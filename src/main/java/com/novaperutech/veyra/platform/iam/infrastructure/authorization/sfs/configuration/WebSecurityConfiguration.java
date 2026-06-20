@@ -112,6 +112,7 @@ public class WebSecurityConfiguration {
       }));
 
       http.csrf(csrfConfigurer -> csrfConfigurer.disable())
+        .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
         .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(unauthorizedRequestHandler))
         .sessionManagement( customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(authorizeRequests -> authorizeRequests
@@ -125,6 +126,8 @@ public class WebSecurityConfiguration {
             "/swagger-ui/**",
             "/swagger-resources/**",
             "/webjars/**",
+            "/h2-console/**",
+            "/dev/**",
             "/error"
           ).permitAll()
           .anyRequest().authenticated());
