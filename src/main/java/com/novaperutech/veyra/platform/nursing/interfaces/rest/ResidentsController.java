@@ -1,9 +1,11 @@
 package com.novaperutech.veyra.platform.nursing.interfaces.rest;
 
+import com.novaperutech.veyra.platform.nursing.domain.model.commands.AssignRoomForResidentCommand;
 import com.novaperutech.veyra.platform.nursing.domain.model.commands.DeleteResidentCommand;
 import com.novaperutech.veyra.platform.nursing.domain.model.queries.GetResidentByIdQuery;
 import com.novaperutech.veyra.platform.nursing.domain.services.ResidentCommandServices;
 import com.novaperutech.veyra.platform.nursing.domain.services.ResidentQueryServices;
+import com.novaperutech.veyra.platform.nursing.interfaces.rest.resources.AssignedRoomForResidentResource;
 import com.novaperutech.veyra.platform.nursing.interfaces.rest.resources.ResidentResource;
 import com.novaperutech.veyra.platform.nursing.interfaces.rest.resources.UpdateResidentResource;
 import com.novaperutech.veyra.platform.nursing.interfaces.rest.transform.ResidentResourceFromEntityAssembler;
@@ -61,6 +63,26 @@ private final ResidentQueryServices residentQueryServices;
         var residentEntity= resident.get();
         var residentResource= ResidentResourceFromEntityAssembler.toResourceFromEntity(residentEntity);
         return ResponseEntity.ok(residentResource);
+    }
+
+    @PatchMapping("/{residentId}/room")
+    @Operation(summary = "Assign or change resident room")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Room assigned"),
+            @ApiResponse(responseCode = "404", description = "Resident not found")
+    })
+    @Parameter(name = "residentId", description = "The unique identifier of the resident", required = true)
+    public ResponseEntity<ResidentResource> assignRoom(
+            @PathVariable Long residentId,
+            @Valid @RequestBody AssignedRoomForResidentResource resource) {
+        var residentOpt = residentQueryServices.handle(new GetResidentByIdQuery(residentId));
+        if (residentOpt.isEmpty()) return ResponseEntity.notFound().build();
+        var nursingHomeId = residentOpt.get().getNursingHome().getId();
+        var command = new AssignRoomForResidentCommand(nursingHomeId, resource.roomNumber(), residentId);
+        residentCommandServices.handle(command);
+        var updated = residentQueryServices.handle(new GetResidentByIdQuery(residentId));
+        if (updated.isEmpty()) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(ResidentResourceFromEntityAssembler.toResourceFromEntity(updated.get()));
     }
 
     @DeleteMapping("/{residentId}")

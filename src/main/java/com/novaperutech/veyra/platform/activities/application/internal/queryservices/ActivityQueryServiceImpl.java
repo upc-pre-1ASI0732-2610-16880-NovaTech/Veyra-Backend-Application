@@ -2,6 +2,7 @@ package com.novaperutech.veyra.platform.activities.application.internal.queryser
 
 import com.novaperutech.veyra.platform.activities.domain.model.aggregates.Activity;
 import com.novaperutech.veyra.platform.activities.domain.model.queries.GetActivitiesByDateAndNursingHomeQuery;
+import com.novaperutech.veyra.platform.activities.domain.model.queries.GetActivityByIdQuery;
 import com.novaperutech.veyra.platform.activities.domain.model.valueobjects.ActivityView;
 import com.novaperutech.veyra.platform.activities.domain.services.ActivityQueryService;
 import com.novaperutech.veyra.platform.activities.infrastructure.persistence.jpa.repositories.ActivityRepository;
@@ -10,6 +11,7 @@ import com.novaperutech.veyra.platform.nursing.domain.model.aggregates.Resident;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +34,12 @@ public class ActivityQueryServiceImpl implements ActivityQueryService {
         return activities.stream()
                 .map(this::mapActivityToActivityView)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<ActivityView> handle(GetActivityByIdQuery query) {
+        return activityRepository.findById(query.activityId())
+                .map(this::mapActivityToActivityView);
     }
 
     private ActivityView mapActivityToActivityView(Activity activity) {
