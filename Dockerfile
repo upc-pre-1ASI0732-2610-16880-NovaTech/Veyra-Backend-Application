@@ -26,7 +26,7 @@ RUN mvn package -DskipTests
 
 # Step 2: Create a runtime image
 # Copy the Spring Boot JAR file into the container
-FROM maven:3.9.11-eclipse-temurin-25 AS runtime
+FROM eclipse-temurin:25-jre AS runtime
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 

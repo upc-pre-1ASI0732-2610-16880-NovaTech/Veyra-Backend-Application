@@ -3,81 +3,101 @@ package com.novaperutech.veyra.platform.iam.application.internal.commandservices
 import com.novaperutech.veyra.platform.iam.application.internal.outboundservices.hashing.HashingService;
 import com.novaperutech.veyra.platform.iam.application.internal.outboundservices.tokens.TokenService;
 import com.novaperutech.veyra.platform.iam.domain.model.aggregates.User;
-import com.novaperutech.veyra.platform.iam.domain.model.commands.SignInCommand;
-import com.novaperutech.veyra.platform.iam.domain.model.commands.SignUpCommand;
+import com.novaperutech.veyra.platform.iam.domain.model.commands.*;
 import com.novaperutech.veyra.platform.iam.domain.services.UserCommandService;
 import com.novaperutech.veyra.platform.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
 import com.novaperutech.veyra.platform.iam.infrastructure.persistence.jpa.repositories.UserRepository;
+import com.novaperutech.veyra.platform.iam.infrastructure.totp.TotpService;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-/**
- * User command service implementation
- * <p>
- *     This class implements the {@link UserCommandService} interface and provides the implementation for the
- *     {@link SignInCommand} and {@link SignUpCommand} commands.
- * </p>
- */
 @Service
 public class UserCommandServiceImpl implements UserCommandService {
 
     private final UserRepository userRepository;
     private final HashingService hashingService;
     private final TokenService tokenService;
-
     private final RoleRepository roleRepository;
+    private final TotpService totpService;
 
-    /**
-     * Constructor for UserCommandServiceImpl.
-     * @param userRepository the user repository
-     * @param hashingService the hashing service
-     * @param tokenService the token service
-     * @param roleRepository the role repository
-     */
-    public UserCommandServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService, RoleRepository roleRepository) {
+    public UserCommandServiceImpl(UserRepository userRepository,
+                                  HashingService hashingService,
+                                  TokenService tokenService,
+                                  RoleRepository roleRepository,
+                                  TotpService totpService) {
         this.userRepository = userRepository;
         this.hashingService = hashingService;
         this.tokenService = tokenService;
         this.roleRepository = roleRepository;
+        this.totpService = totpService;
     }
 
-    /**
-     * Handle the sign-in command
-     * <p>
-     *     This method handles the {@link SignInCommand} command and returns the user and the token.
-     * </p>
-     * @param command the sign-in command containing the username and password
-     * @return and optional containing the user matching the username and the generated token
-     * @throws RuntimeException if the user is not found or the password is invalid
-     */
     @Override
     public Optional<ImmutablePair<User, String>> handle(SignInCommand command) {
         var user = userRepository.findByUsername(command.username());
-        if (user.isEmpty())
-            throw new RuntimeException("User not found");
+        if (user.isEmpty()) throw new RuntimeException("User not found");
         if (!hashingService.matches(command.password(), user.get().getPassword()))
             throw new RuntimeException("Invalid password");
+        // If MFA is enabled, token is not issued yet — caller checks user.isMfaEnabled()
+        if (user.get().isMfaEnabled()) {
+            return Optional.of(ImmutablePair.of(user.get(), ""));
+        }
         var token = tokenService.generateToken(user.get().getUsername());
         return Optional.of(ImmutablePair.of(user.get(), token));
     }
 
-    /**
-     * Handle the sign-up command
-     * <p>
-     *     This method handles the {@link SignUpCommand} command and returns the user.
-     * </p>
-     * @param command the sign-up command containing the username and password
-     * @return the created user
-     */
     @Override
     public Optional<User> handle(SignUpCommand command) {
         if (userRepository.existsByUsername(command.username()))
             throw new RuntimeException("Username already exists");
-        var roles = command.roles().stream().map(role -> roleRepository.findByName(role.getName()).orElseThrow(() -> new RuntimeException("Role name not found"))).toList();
+        var roles = command.roles().stream()
+                .map(role -> roleRepository.findByName(role.getName())
+                        .orElseThrow(() -> new RuntimeException("Role name not found")))
+                .toList();
         var user = new User(command.username(), hashingService.encode(command.password()), roles);
         userRepository.save(user);
         return userRepository.findByUsername(command.username());
+    }
+
+    @Override
+    public String handle(SetupMfaCommand command) {
+        var user = userRepository.findByUsername(command.username())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        // Generate a new secret and store it temporarily (not active until EnableMfa)
+        String secret = totpService.generateSecret();
+        user.enableMfa(secret);
+        userRepository.save(user);
+        return secret;
+    }
+
+    @Override
+    public Optional<User> handle(EnableMfaCommand command) {
+        var user = userRepository.findByUsername(command.username())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (user.getTotpSecret() == null) throw new RuntimeException("MFA setup not initiated. Call /mfa/setup first.");
+        if (!totpService.verify(user.getTotpSecret(), command.totpCode()))
+            throw new RuntimeException("Invalid TOTP code");
+        user.enableMfa(user.getTotpSecret());
+        return Optional.of(userRepository.save(user));
+    }
+
+    @Override
+    public Optional<User> handle(DisableMfaCommand command) {
+        var user = userRepository.findByUsername(command.username())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.disableMfa();
+        return Optional.of(userRepository.save(user));
+    }
+
+    @Override
+    public Optional<String> handle(VerifyMfaCommand command) {
+        var user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (!user.isMfaEnabled()) throw new RuntimeException("MFA is not enabled for this user");
+        if (!totpService.verify(user.getTotpSecret(), command.totpCode()))
+            throw new RuntimeException("Invalid TOTP code");
+        return Optional.of(tokenService.generateToken(user.getUsername()));
     }
 }

@@ -15,6 +15,12 @@ public class AuthenticatedUserResourceFromEntityAssembler {
      * @return the AuthenticatedUserResource
      */
     public static AuthenticatedUserResource toResourceFromEntity(User user, String token) {
-        return new AuthenticatedUserResource(user.getId(), user.getUsername(), user.getRoles().stream().map(Role::getStringName).toList(),token);
+        return new AuthenticatedUserResource(
+                user.getId(),
+                user.getUsername(),
+                user.getRoles().stream().map(Role::getStringName).toList(),
+                token,
+                user.isMfaEnabled() && token.isEmpty()
+        );
     }
 }

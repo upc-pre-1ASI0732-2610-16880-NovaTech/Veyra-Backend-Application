@@ -209,14 +209,16 @@ public class StripeServiceImpl implements StripeService {
             paymentMethod.attach(PaymentMethodAttachParams.builder()
                     .setCustomer(customerId)
                     .build());
-            log.info("Payment method {} attached to customer {}", paymentMethodId, customerId);
+            // Usar el ID real resuelto por Stripe (pm_card_visa → pm_xxx real)
+            String resolvedPaymentMethodId = paymentMethod.getId();
+            log.info("Payment method {} attached to customer {}", resolvedPaymentMethodId, customerId);
 
             // Establecer como método de pago predeterminado
             Customer customer = Customer.retrieve(customerId);
             customer.update(CustomerUpdateParams.builder()
                     .setInvoiceSettings(
                             CustomerUpdateParams.InvoiceSettings.builder()
-                                    .setDefaultPaymentMethod(paymentMethodId)
+                                    .setDefaultPaymentMethod(resolvedPaymentMethodId)
                                     .build()
                     )
                     .build());
@@ -231,6 +233,7 @@ public class StripeServiceImpl implements StripeService {
                                     .setPrice(priceId)
                                     .build()
                     )
+                    .setDefaultPaymentMethod(resolvedPaymentMethodId)
                     .setPaymentBehavior(SubscriptionCreateParams.PaymentBehavior.DEFAULT_INCOMPLETE)
                     .setPaymentSettings(
                             SubscriptionCreateParams.PaymentSettings.builder()
@@ -247,7 +250,24 @@ public class StripeServiceImpl implements StripeService {
                     .build();
 
             com.stripe.model.Subscription subscription = com.stripe.model.Subscription.create(params);
-            log.info("Subscription created successfully: {}", subscription.getId());
+            log.info("Subscription created: {}, status: {}", subscription.getId(), subscription.getStatus());
+
+            // Si la suscripción quedó incompleta, pagar la factura pendiente directamente
+            if ("incomplete".equals(subscription.getStatus())) {
+                String latestInvoiceId = subscription.getLatestInvoice();
+                if (latestInvoiceId != null) {
+                    Invoice invoice = Invoice.retrieve(latestInvoiceId);
+                    Invoice paidInvoice = invoice.pay(
+                            InvoicePayParams.builder()
+                                    .setPaymentMethod(resolvedPaymentMethodId)
+                                    .build()
+                    );
+                    log.info("Invoice {} paid, status: {}", latestInvoiceId, paidInvoice.getStatus());
+                    subscription = com.stripe.model.Subscription.retrieve(subscription.getId());
+                    log.info("Subscription status after payment: {}", subscription.getStatus());
+                }
+            }
+
             return subscription;
 
         } catch (StripeException e) {
