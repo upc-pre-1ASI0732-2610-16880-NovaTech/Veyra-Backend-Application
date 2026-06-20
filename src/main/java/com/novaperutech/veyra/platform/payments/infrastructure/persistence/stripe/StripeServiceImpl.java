@@ -209,14 +209,16 @@ public class StripeServiceImpl implements StripeService {
             paymentMethod.attach(PaymentMethodAttachParams.builder()
                     .setCustomer(customerId)
                     .build());
-            log.info("Payment method {} attached to customer {}", paymentMethodId, customerId);
+            // Usar el ID real resuelto por Stripe (pm_card_visa → pm_xxx real)
+            String resolvedPaymentMethodId = paymentMethod.getId();
+            log.info("Payment method {} attached to customer {}", resolvedPaymentMethodId, customerId);
 
             // Establecer como método de pago predeterminado
             Customer customer = Customer.retrieve(customerId);
             customer.update(CustomerUpdateParams.builder()
                     .setInvoiceSettings(
                             CustomerUpdateParams.InvoiceSettings.builder()
-                                    .setDefaultPaymentMethod(paymentMethodId)
+                                    .setDefaultPaymentMethod(resolvedPaymentMethodId)
                                     .build()
                     )
                     .build());
