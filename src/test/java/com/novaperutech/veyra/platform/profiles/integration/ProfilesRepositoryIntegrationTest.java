@@ -6,8 +6,6 @@ import com.novaperutech.veyra.platform.profiles.infrastructure.persistence.jpa.r
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
@@ -22,9 +20,6 @@ class ProfilesRepositoryIntegrationTest {
 
     @Autowired
     private PersonProfileRepository personProfileRepository;
-
-    @MockBean(name = "mongoMappingContext")
-    private MongoMappingContext mongoMappingContext;
 
     @Test
     void shouldCreateEntitySuccessfully() {
