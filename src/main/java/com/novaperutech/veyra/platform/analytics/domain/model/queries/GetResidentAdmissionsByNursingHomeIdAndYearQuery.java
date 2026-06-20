@@ -8,6 +8,6 @@ public record GetResidentAdmissionsByNursingHomeIdAndYearQuery(NursingHomeId nur
      if (year==null){
          throw new IllegalArgumentException("year cannot be null");
      }
-     if (year < 1900 || year > 2025) throw new IllegalArgumentException("year must be between 1900 and 2025");
+     if (year < 1900 || year > 2100) throw new IllegalArgumentException("year must be between 1900 and 2025");
     }
 }

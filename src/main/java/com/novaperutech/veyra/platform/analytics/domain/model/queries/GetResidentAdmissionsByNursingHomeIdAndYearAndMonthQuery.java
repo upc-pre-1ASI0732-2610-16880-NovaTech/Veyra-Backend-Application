@@ -11,7 +11,7 @@ public  GetResidentAdmissionsByNursingHomeIdAndYearAndMonthQuery{
     if (month == null ){
         throw new IllegalArgumentException("month cannot be null");
     }
-    if ( year < 1900 || year > 2025) {
+    if ( year < 1900 || year > 2100) {
         throw new IllegalArgumentException("year must be between 1900 and 2100");
     }
 

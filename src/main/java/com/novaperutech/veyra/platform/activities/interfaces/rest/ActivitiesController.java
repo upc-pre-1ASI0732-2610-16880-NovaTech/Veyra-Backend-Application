@@ -1,6 +1,7 @@
 package com.novaperutech.veyra.platform.activities.interfaces.rest;
 
 import com.novaperutech.veyra.platform.activities.domain.model.queries.GetActivitiesByDateAndNursingHomeQuery;
+import com.novaperutech.veyra.platform.activities.domain.model.queries.GetActivityByIdQuery;
 import com.novaperutech.veyra.platform.activities.domain.services.ActivityCommandService;
 import com.novaperutech.veyra.platform.activities.domain.services.ActivityQueryService;
 import com.novaperutech.veyra.platform.activities.interfaces.rest.resources.ActivityResource;
@@ -50,7 +51,7 @@ public class ActivitiesController {
     }
 
     @PostMapping
-    public ResponseEntity<Long> createActivity(
+    public ResponseEntity<ActivityResource> createActivity(
             @PathVariable Long nursingHomeId,
             @RequestBody CreateActivityResource resource) {
 
@@ -61,6 +62,12 @@ public class ActivitiesController {
             return ResponseEntity.badRequest().build();
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(activityId);
+        var activityView = activityQueryService.handle(new GetActivityByIdQuery(activityId));
+        if (activityView.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var activityResource = ActivityResourceFromViewAssembler.toResourceFromView(activityView.get());
+        return ResponseEntity.status(HttpStatus.CREATED).body(activityResource);
     }
 }

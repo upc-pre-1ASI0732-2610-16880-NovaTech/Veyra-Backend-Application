@@ -57,4 +57,11 @@ public class GlobalExceptionHandler {
         return ErrorResponse.create(ex, HttpStatusCode.valueOf(HttpStatus.FORBIDDEN.value()), ex.getMessage());
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ErrorResponse handleException(RuntimeException ex) {
+        String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+        return ErrorResponse.create(ex, HttpStatusCode.valueOf(HttpStatus.BAD_REQUEST.value()), message);
+    }
+
 }

@@ -7,7 +7,7 @@ public record GetStaffTerminationsByNursingHomeIdAndYearQuery(NursingHomeId nurs
         if (year==null){
             throw new IllegalArgumentException("year must not be null");
         }
-        if (year<1900||year>2025)
+        if (year<1900||year>2100)
         {
             throw new IllegalArgumentException("year must be between 1900 and 2025");
         }

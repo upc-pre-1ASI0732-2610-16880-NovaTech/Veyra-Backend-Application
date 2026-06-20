@@ -5,7 +5,6 @@ import com.novaperutech.veyra.platform.analytics.interfaces.rest.resources.Metri
 
 import java.time.Month;
 import java.time.format.TextStyle;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -13,40 +12,32 @@ import java.util.stream.Collectors;
 
 public class MetricResourceFromEntityAssembler {
 
-    public static MetricResource toResourceFromEntityList(List<Metric> metrics) {
-        if (metrics.isEmpty()) {
-            return new MetricResource(
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    "",
-                    0L
-            );
-        }
+    private static final List<Month> ALL_MONTHS = List.of(Month.values());
 
+    public static MetricResource toResourceFromEntityList(List<Metric> metrics) {
+        return toResourceFromEntityList(metrics, null);
+    }
+
+    public static MetricResource toResourceFromEntityList(List<Metric> metrics, String metricTypeFallback) {
         Map<Month, Long> monthlyAggregation = metrics.stream()
                 .collect(Collectors.groupingBy(
                         metric -> metric.getEventDate().getMonth(),
                         Collectors.summingLong(Metric::getValue)
                 ));
 
-        List<Month> sortedMonths = monthlyAggregation.keySet().stream()
-                .sorted()
+        List<String> labels = ALL_MONTHS.stream()
+                .map(month -> month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH))
                 .toList();
 
-        // Generate labels (month names in English)
-        List<String> labels = sortedMonths.stream()
-                .map(month -> month.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+        List<Long> values = ALL_MONTHS.stream()
+                .map(month -> monthlyAggregation.getOrDefault(month, 0L))
                 .toList();
 
-        List<Long> values = sortedMonths.stream()
-                .map(monthlyAggregation::get)
-                .toList();
+        long total = values.stream().mapToLong(Long::longValue).sum();
 
-        long total = values.stream()
-                .mapToLong(Long::longValue)
-                .sum();
-
-        String metricType = metrics.getFirst().getMetricType().name();
+        String metricType = metrics.isEmpty()
+                ? (metricTypeFallback != null ? metricTypeFallback : "")
+                : metrics.getFirst().getMetricType().name();
 
         return new MetricResource(labels, values, metricType, total);
     }

@@ -3,6 +3,7 @@ package com.novaperutech.veyra.platform.analytics.interfaces.rest;
 import com.novaperutech.veyra.platform.analytics.domain.model.queries.GetResidentAdmissionsByNursingHomeIdAndYearQuery;
 import com.novaperutech.veyra.platform.analytics.domain.model.queries.GetStaffHiresByNursingHomeIdAndYearQuery;
 import com.novaperutech.veyra.platform.analytics.domain.model.queries.GetStaffTerminationsByNursingHomeIdAndYearQuery;
+import com.novaperutech.veyra.platform.analytics.domain.model.valueobjects.MetricType;
 import com.novaperutech.veyra.platform.analytics.domain.model.valueobjects.NursingHomeId;
 import com.novaperutech.veyra.platform.analytics.domain.services.MetricQueryService;
 import com.novaperutech.veyra.platform.analytics.interfaces.rest.resources.MetricResource;
@@ -43,22 +44,17 @@ public class NursingHomeAnalyticsController {
         var nursingHomeIdVO = new NursingHomeId(nursingHomeId);
         var query = new GetResidentAdmissionsByNursingHomeIdAndYearQuery(nursingHomeIdVO, year);
         var metrics = metricQueryService.handle(query);
-
-        if (metrics.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        var resource = MetricResourceFromEntityAssembler.toResourceFromEntityList(metrics);
+        var resource = MetricResourceFromEntityAssembler.toResourceFromEntityList(metrics, MetricType.RESIDENT_ADMISSION.name());
         return ResponseEntity.ok(resource);
     }
+
     @GetMapping("/staff-hires")
     @Operation(
             summary = "Get staff hires analytics",
             description = "Returns analytics for staff hires"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Analytics returned successfully"),
-            @ApiResponse(responseCode = "404", description = "No metrics found")
+            @ApiResponse(responseCode = "200", description = "Analytics returned successfully")
     })
     public ResponseEntity<MetricResource> getStaffHiresAnalytics(
             @PathVariable Long nursingHomeId,
@@ -67,12 +63,7 @@ public class NursingHomeAnalyticsController {
         var nursingHomeIdVO = new NursingHomeId(nursingHomeId);
         var query = new GetStaffHiresByNursingHomeIdAndYearQuery(nursingHomeIdVO, year);
         var metrics = metricQueryService.handle(query);
-
-        if (metrics.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        var resource = MetricResourceFromEntityAssembler.toResourceFromEntityList(metrics);
+        var resource = MetricResourceFromEntityAssembler.toResourceFromEntityList(metrics, MetricType.EMPLOYEE_HIRED.name());
         return ResponseEntity.ok(resource);
     }
 
@@ -82,8 +73,7 @@ public class NursingHomeAnalyticsController {
             description = "Returns analytics for staff terminations"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Analytics returned successfully"),
-            @ApiResponse(responseCode = "404", description = "No metrics found")
+            @ApiResponse(responseCode = "200", description = "Analytics returned successfully")
     })
     public ResponseEntity<MetricResource> getStaffTerminationsAnalytics(
             @PathVariable Long nursingHomeId,
@@ -92,12 +82,7 @@ public class NursingHomeAnalyticsController {
         var nursingHomeIdVO = new NursingHomeId(nursingHomeId);
         var query = new GetStaffTerminationsByNursingHomeIdAndYearQuery(nursingHomeIdVO, year);
         var metrics = metricQueryService.handle(query);
-
-        if (metrics.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        var resource = MetricResourceFromEntityAssembler.toResourceFromEntityList(metrics);
+        var resource = MetricResourceFromEntityAssembler.toResourceFromEntityList(metrics, MetricType.EMPLOYEE_TERMINATED.name());
         return ResponseEntity.ok(resource);
     }
 }
