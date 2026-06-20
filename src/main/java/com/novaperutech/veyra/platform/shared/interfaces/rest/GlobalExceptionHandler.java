@@ -1,5 +1,6 @@
 package com.novaperutech.veyra.platform.shared.interfaces.rest;
 
+import com.novaperutech.veyra.platform.nursing.domain.exceptions.NoActiveSubscriptionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.ErrorResponse;
@@ -48,6 +49,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     ErrorResponse handleException(IllegalArgumentException ex) {
         return ErrorResponse.create(ex, HttpStatusCode.valueOf(HttpStatus.BAD_REQUEST.value()), ex.getMessage());
+    }
+
+    @ExceptionHandler(NoActiveSubscriptionException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    ErrorResponse handleException(NoActiveSubscriptionException ex) {
+        return ErrorResponse.create(ex, HttpStatusCode.valueOf(HttpStatus.FORBIDDEN.value()), ex.getMessage());
     }
 
 }

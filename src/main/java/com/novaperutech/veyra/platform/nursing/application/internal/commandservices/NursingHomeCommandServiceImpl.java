@@ -1,8 +1,10 @@
 package com.novaperutech.veyra.platform.nursing.application.internal.commandservices;
 
 import com.novaperutech.veyra.platform.nursing.application.internal.outboundservices.acl.ExternalProfileService;
+import com.novaperutech.veyra.platform.nursing.application.internal.outboundservices.acl.ExternalSubscriptionService;
 import com.novaperutech.veyra.platform.nursing.domain.exceptions.AdministratorNotFoundException;
 import com.novaperutech.veyra.platform.nursing.domain.exceptions.BusinessProfileCreationException;
+import com.novaperutech.veyra.platform.nursing.domain.exceptions.NoActiveSubscriptionException;
 import com.novaperutech.veyra.platform.nursing.domain.exceptions.NursingHomeAlreadyExistsException;
 import com.novaperutech.veyra.platform.nursing.domain.exceptions.NursingHomeNotFoundException;
 import com.novaperutech.veyra.platform.nursing.domain.exceptions.NursingHomeWithBusinessProfileAlreadyExistsException;
@@ -29,19 +31,16 @@ public class NursingHomeCommandServiceImpl implements NursingHomeCommandServices
     private final NursingHomeRepository nursingHomeRepository;
     private final ExternalProfileService externalProfileService;
     private final AdministratorRepository administratorRepository;
+    private final ExternalSubscriptionService externalSubscriptionService;
 
-    /**
-     * Constructor of the class.
-     * @param nursingHomeRepository the repository to be used by the class.
-     * @param externalProfileService the external profile service to be used by the class.
-     * @param administratorRepository the repository to be used by the class.
-     */
     public NursingHomeCommandServiceImpl(NursingHomeRepository nursingHomeRepository,
                                          ExternalProfileService externalProfileService,
-                                         AdministratorRepository administratorRepository) {
+                                         AdministratorRepository administratorRepository,
+                                         ExternalSubscriptionService externalSubscriptionService) {
         this.nursingHomeRepository = nursingHomeRepository;
         this.externalProfileService = externalProfileService;
         this.administratorRepository = administratorRepository;
+        this.externalSubscriptionService = externalSubscriptionService;
     }
 
     // inherit javadoc
@@ -50,6 +49,11 @@ public class NursingHomeCommandServiceImpl implements NursingHomeCommandServices
         // Validate administrator exists
         var administratorId = administratorRepository.findById(command.administratorId())
                 .orElseThrow(() -> new AdministratorNotFoundException(command.administratorId()));
+
+        // Validate administrator has an active subscription
+        if (!externalSubscriptionService.hasActiveSubscription(administratorId.getUserId().userId())) {
+            throw new NoActiveSubscriptionException(command.administratorId());
+        }
 
         // Validate nursing home doesn't already exist for this administrator
         var existingNursingHome = nursingHomeRepository.findByAdministratorId(administratorId.getId());
