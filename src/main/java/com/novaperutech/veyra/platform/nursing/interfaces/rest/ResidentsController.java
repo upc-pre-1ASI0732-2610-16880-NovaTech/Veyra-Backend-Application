@@ -32,7 +32,7 @@ private final ResidentQueryServices residentQueryServices;
         this.residentQueryServices = residentQueryServices;
     }
 
-    @PutMapping("/{residentId}")
+    @PatchMapping("/{residentId}")
     @Operation(summary = "Update resident by ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Resident updated"),

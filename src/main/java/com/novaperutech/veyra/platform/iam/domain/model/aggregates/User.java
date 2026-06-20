@@ -38,6 +38,12 @@ public class User extends AuditableAbstractAggregateRoot<User> {
                 inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
+    @Column(name = "totp_secret")
+    private String totpSecret;
+
+    @Column(name = "mfa_enabled", nullable = false)
+    private boolean mfaEnabled = false;
+
     /**
      * Default constructor.
      */
@@ -54,6 +60,16 @@ public class User extends AuditableAbstractAggregateRoot<User> {
         this.username = username;
         this.password = password;
         this.roles = new HashSet<>();
+    }
+
+    public void enableMfa(String totpSecret) {
+        this.totpSecret = totpSecret;
+        this.mfaEnabled = true;
+    }
+
+    public void disableMfa() {
+        this.totpSecret = null;
+        this.mfaEnabled = false;
     }
 
     /**
