@@ -39,8 +39,7 @@ public class StripeServiceImpl implements StripeService {
             loadOrCreateProduct("Nursing Home Plan", PlanType.NURSING_HOME);
             log.info("Stripe prices initialized successfully");
         } catch (StripeException e) {
-            log.error("Error initializing Stripe prices: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to initialize Stripe prices", e);
+            log.error("Error initializing Stripe prices: {}. Stripe features will be unavailable.", e.getMessage());
         }
     }
 

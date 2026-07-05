@@ -1,13 +1,17 @@
 
         package com.novaperutech.veyra.platform.activities.domain.model.valueobjects;
 
+        import jakarta.persistence.Embeddable;
         import java.time.LocalTime;
         import java.util.Objects;
 
+        @Embeddable
         public class ActivityPeriod {
 
-            private final LocalTime startTime;
-            private final LocalTime endTime;
+            private LocalTime startTime;
+            private LocalTime endTime;
+
+            protected ActivityPeriod() {}
 
             public ActivityPeriod(LocalTime startTime, LocalTime endTime) {
                 this.startTime = startTime;
