@@ -10,7 +10,7 @@ public class UpdateResidentCommandFromResourceAssembler {
         byte[] photoBytes = null;
         String photoFileName = null;
 
-        if (resource.photoBase64() != null && !resource.photoBase64().isEmpty()) {
+        if (resource.photoBase64() != null && resource.photoBase64().startsWith("data:")) {
             photoBytes = decodeBase64Photo(resource.photoBase64());
             photoFileName = generatePhotoFileName(resource.dni());
         }

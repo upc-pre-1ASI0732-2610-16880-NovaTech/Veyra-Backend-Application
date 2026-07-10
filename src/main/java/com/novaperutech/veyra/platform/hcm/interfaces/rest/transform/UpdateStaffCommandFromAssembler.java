@@ -10,7 +10,7 @@ public class UpdateStaffCommandFromAssembler {
         byte[] photoBytes = null;
         String photoFileName = null;
 
-        if (resource.photo() != null && !resource.photo().isEmpty()) {
+        if (resource.photo() != null && resource.photo().startsWith("data:")) {
             photoBytes = decodeBase64Photo(resource.photo());
             photoFileName = generatePhotoFileName(resource.dni());
         }
