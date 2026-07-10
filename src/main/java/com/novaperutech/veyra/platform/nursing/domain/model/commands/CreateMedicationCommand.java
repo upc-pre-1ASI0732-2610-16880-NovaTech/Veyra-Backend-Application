@@ -2,10 +2,14 @@ package com.novaperutech.veyra.platform.nursing.domain.model.commands;
 
 import java.time.LocalDate;
 
-public record CreateMedicationCommand(String name, String description, Integer amount, LocalDate expirationDate,String drugPresentation,String dosage , Long  residentId) {
+public record CreateMedicationCommand(String name, String description, Integer amount, LocalDate expirationDate,String drugPresentation,String dosage, String lot, Long nursingHomeId) {
     public CreateMedicationCommand{
-        if (residentId == null || residentId <= 0) {
-            throw new IllegalArgumentException("Resident ID must be a positive number");
+        if (nursingHomeId == null || nursingHomeId <= 0) {
+            throw new IllegalArgumentException("Nursing home ID must be a positive number");
+        }
+
+        if (lot == null || lot.isBlank()) {
+            throw new IllegalArgumentException("Lot cannot be null or blank");
         }
 
         if (name == null || name.isBlank()) {
