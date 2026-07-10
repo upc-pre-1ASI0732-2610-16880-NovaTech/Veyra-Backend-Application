@@ -31,7 +31,8 @@ public class SmsService {
     @PostConstruct
     public void init() {
         Twilio.init(apiKeySid, apiKeySecret, accountSid);
-        log.info("Twilio SMS service initialized");
+        log.info("Twilio SMS service initialized. accountSid={}, apiKeySid={}, fromNumber={}",
+                maskForLog(accountSid), maskForLog(apiKeySid), fromNumber);
     }
 
     public void sendMfaCode(String toPhoneNumber, String code) {
@@ -44,8 +45,16 @@ public class SmsService {
             log.info("MFA SMS code sent to {}", maskPhoneNumber(toPhoneNumber));
         } catch (Exception e) {
             log.error("Error sending MFA SMS to {}: {}", maskPhoneNumber(toPhoneNumber), e.getMessage(), e);
-            throw new IllegalStateException("Failed to send SMS verification code", e);
+            // TEMPORARY: surface the real cause in the API response for remote diagnosis during TB2 testing.
+            // Revert to a generic message before final submission.
+            throw new IllegalStateException("Failed to send SMS verification code: " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
+    }
+
+    private String maskForLog(String value) {
+        if (value == null || value.isBlank()) return "<empty>";
+        if (value.length() <= 6) return "***";
+        return value.substring(0, 6) + "...";
     }
 
     private String maskPhoneNumber(String phoneNumber) {
