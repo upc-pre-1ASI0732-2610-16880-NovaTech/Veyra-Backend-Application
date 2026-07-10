@@ -93,9 +93,29 @@ public class UserCommandServiceImpl implements UserCommandService {
     }
 
     @Override
+    public Optional<User> handle(SetupSmsMfaCommand command) {
+        var user = userRepository.findByUsername(command.username())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        var code = generateSmsCode();
+        var expiresAt = LocalDateTime.now().plusMinutes(SMS_CODE_TTL_MINUTES);
+        user.beginSmsMfaSetup(command.phoneNumber(), code, expiresAt);
+        var savedUser = userRepository.save(user);
+        smsService.sendMfaCode(command.phoneNumber(), code);
+        return Optional.of(savedUser);
+    }
+
+    @Override
     public Optional<User> handle(EnableMfaCommand command) {
         var user = userRepository.findByUsername(command.username())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getMfaMethod() == MfaMethod.SMS) {
+            if (!user.isSmsCodeValid(command.totpCode()))
+                throw new RuntimeException("Invalid or expired SMS code");
+            user.activateSmsMfa();
+            return Optional.of(userRepository.save(user));
+        }
+
         if (user.getTotpSecret() == null) throw new RuntimeException("MFA setup not initiated. Call /mfa/setup first.");
         if (!totpService.verify(user.getTotpSecret(), command.totpCode()))
             throw new RuntimeException("Invalid TOTP code");
@@ -116,8 +136,13 @@ public class UserCommandServiceImpl implements UserCommandService {
         var user = userRepository.findById(command.userId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if (!user.isMfaEnabled()) throw new RuntimeException("MFA is not enabled for this user");
-        if (!totpService.verify(user.getTotpSecret(), command.totpCode()))
+
+        if (user.getMfaMethod() == MfaMethod.SMS) {
+            if (!user.isSmsCodeValid(command.totpCode()))
+                throw new RuntimeException("Invalid or expired SMS code");
+        } else if (!totpService.verify(user.getTotpSecret(), command.totpCode())) {
             throw new RuntimeException("Invalid TOTP code");
+        }
         return Optional.of(tokenService.generateToken(user.getUsername()));
     }
 }
