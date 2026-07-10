@@ -4,34 +4,47 @@ import com.novaperutech.veyra.platform.iam.application.internal.outboundservices
 import com.novaperutech.veyra.platform.iam.application.internal.outboundservices.tokens.TokenService;
 import com.novaperutech.veyra.platform.iam.domain.model.aggregates.User;
 import com.novaperutech.veyra.platform.iam.domain.model.commands.*;
+import com.novaperutech.veyra.platform.iam.domain.model.valueobjects.MfaMethod;
 import com.novaperutech.veyra.platform.iam.domain.services.UserCommandService;
 import com.novaperutech.veyra.platform.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
 import com.novaperutech.veyra.platform.iam.infrastructure.persistence.jpa.repositories.UserRepository;
+import com.novaperutech.veyra.platform.iam.infrastructure.sms.SmsService;
 import com.novaperutech.veyra.platform.iam.infrastructure.totp.TotpService;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
 public class UserCommandServiceImpl implements UserCommandService {
+
+    private static final int SMS_CODE_TTL_MINUTES = 5;
 
     private final UserRepository userRepository;
     private final HashingService hashingService;
     private final TokenService tokenService;
     private final RoleRepository roleRepository;
     private final TotpService totpService;
+    private final SmsService smsService;
 
     public UserCommandServiceImpl(UserRepository userRepository,
                                   HashingService hashingService,
                                   TokenService tokenService,
                                   RoleRepository roleRepository,
-                                  TotpService totpService) {
+                                  TotpService totpService,
+                                  SmsService smsService) {
         this.userRepository = userRepository;
         this.hashingService = hashingService;
         this.tokenService = tokenService;
         this.roleRepository = roleRepository;
         this.totpService = totpService;
+        this.smsService = smsService;
+    }
+
+    private String generateSmsCode() {
+        return String.format("%06d", new SecureRandom().nextInt(1_000_000));
     }
 
     @Override
@@ -42,6 +55,13 @@ public class UserCommandServiceImpl implements UserCommandService {
             throw new RuntimeException("Invalid password");
         // If MFA is enabled, token is not issued yet — caller checks user.isMfaEnabled()
         if (user.get().isMfaEnabled()) {
+            if (user.get().getMfaMethod() == MfaMethod.SMS) {
+                var code = generateSmsCode();
+                var expiresAt = LocalDateTime.now().plusMinutes(SMS_CODE_TTL_MINUTES);
+                user.get().refreshSmsCode(code, expiresAt);
+                userRepository.save(user.get());
+                smsService.sendMfaCode(user.get().getPhoneNumber(), code);
+            }
             return Optional.of(ImmutablePair.of(user.get(), ""));
         }
         var token = tokenService.generateToken(user.get().getUsername());

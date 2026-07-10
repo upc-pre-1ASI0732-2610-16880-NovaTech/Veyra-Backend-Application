@@ -1,6 +1,7 @@
 package com.novaperutech.veyra.platform.iam.domain.model.aggregates;
 
 import com.novaperutech.veyra.platform.iam.domain.model.entities.Role;
+import com.novaperutech.veyra.platform.iam.domain.model.valueobjects.MfaMethod;
 import com.novaperutech.veyra.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -8,6 +9,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,6 +46,19 @@ public class User extends AuditableAbstractAggregateRoot<User> {
     @Column(name = "mfa_enabled", nullable = false)
     private boolean mfaEnabled = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mfa_method", nullable = false)
+    private MfaMethod mfaMethod = MfaMethod.NONE;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "sms_mfa_code")
+    private String smsMfaCode;
+
+    @Column(name = "sms_mfa_code_expires_at")
+    private LocalDateTime smsMfaCodeExpiresAt;
+
     /**
      * Default constructor.
      */
@@ -65,11 +80,47 @@ public class User extends AuditableAbstractAggregateRoot<User> {
     public void enableMfa(String totpSecret) {
         this.totpSecret = totpSecret;
         this.mfaEnabled = true;
+        this.mfaMethod = MfaMethod.TOTP;
     }
 
     public void disableMfa() {
         this.totpSecret = null;
         this.mfaEnabled = false;
+        this.mfaMethod = MfaMethod.NONE;
+        this.phoneNumber = null;
+        this.smsMfaCode = null;
+        this.smsMfaCodeExpiresAt = null;
+    }
+
+    /**
+     * Begins SMS MFA setup: stores the phone number and a freshly sent code, pending
+     * confirmation via {@link #activateSmsMfa()}. Does not enable MFA yet.
+     */
+    public void beginSmsMfaSetup(String phoneNumber, String code, LocalDateTime expiresAt) {
+        this.phoneNumber = phoneNumber;
+        this.smsMfaCode = code;
+        this.smsMfaCodeExpiresAt = expiresAt;
+        this.mfaMethod = MfaMethod.SMS;
+    }
+
+    /** Confirms SMS MFA setup after a valid code was verified. */
+    public void activateSmsMfa() {
+        this.mfaEnabled = true;
+        this.smsMfaCode = null;
+        this.smsMfaCodeExpiresAt = null;
+    }
+
+    /** Issues a fresh SMS code, e.g. for the second factor during sign-in. */
+    public void refreshSmsCode(String code, LocalDateTime expiresAt) {
+        this.smsMfaCode = code;
+        this.smsMfaCodeExpiresAt = expiresAt;
+    }
+
+    public boolean isSmsCodeValid(String code) {
+        return smsMfaCode != null
+                && smsMfaCode.equals(code)
+                && smsMfaCodeExpiresAt != null
+                && LocalDateTime.now().isBefore(smsMfaCodeExpiresAt);
     }
 
     /**

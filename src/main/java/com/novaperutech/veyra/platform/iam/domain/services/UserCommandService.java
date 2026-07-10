@@ -13,12 +13,15 @@ public interface UserCommandService {
     /** Returns the TOTP secret generated for the user (not yet active until enableMfa). */
     String handle(SetupMfaCommand command);
 
-    /** Verifies the first TOTP code and activates MFA on the account. */
+    /** Stores the phone number, sends the first SMS code (not yet active until enableMfa). */
+    Optional<User> handle(SetupSmsMfaCommand command);
+
+    /** Verifies the first TOTP/SMS code and activates MFA on the account. */
     Optional<User> handle(EnableMfaCommand command);
 
     /** Disables MFA for the given user. */
     Optional<User> handle(DisableMfaCommand command);
 
-    /** Verifies TOTP during sign-in and returns the JWT token. */
+    /** Verifies TOTP/SMS during sign-in and returns the JWT token. */
     Optional<String> handle(VerifyMfaCommand command);
 }
