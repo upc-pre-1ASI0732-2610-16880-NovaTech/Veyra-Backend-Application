@@ -40,9 +40,12 @@ public class Medication extends AuditableAbstractAggregateRoot<Medication> {
     @Column(nullable = false)
     private String dosage;
 
+    @Column(nullable = false)
+    private String lot;
+
     @ManyToOne
-    @JoinColumn(name ="resident_id")
-    private Resident resident;
+    @JoinColumn(name ="nursing_home_id")
+    private NursingHome nursingHome;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -51,13 +54,14 @@ public class Medication extends AuditableAbstractAggregateRoot<Medication> {
     public Medication(){}
 
     public Medication(String name, String description, Stock stock, ExpirationDate expirationDate,
-                      DrugPresentation drugPresentation, String dosage, Resident resident) {
+                      DrugPresentation drugPresentation, String dosage, String lot, NursingHome nursingHome) {
         this.description = description;
         this.name = name;
         this.stock = stock;
         this.expirationDate = expirationDate;
-        this.resident = resident;
+        this.nursingHome = nursingHome;
         this.dosage = dosage;
+        this.lot = lot;
         this.drugPresentation = drugPresentation;
     }
 
@@ -71,7 +75,7 @@ public class Medication extends AuditableAbstractAggregateRoot<Medication> {
 
         if (stock.isLow(LOW_STOCK_THRESHOLD)) {
             this.registerEvent(new MedicationStockLowEvent(
-                    this, this.getId(), this.name, this.getResident().getId()
+                    this, this.getId(), this.name, this.getNursingHome().getId()
             ));
         }
         return this;
@@ -79,5 +83,13 @@ public class Medication extends AuditableAbstractAggregateRoot<Medication> {
 
     public boolean hasEnoughStock(int quantity) {
         return stock.hasEnough(quantity);
+    }
+
+    public boolean isLowStock() {
+        return stock.isLow(LOW_STOCK_THRESHOLD);
+    }
+
+    public boolean isExpiringSoon(int days) {
+        return expirationDate.isExpiringSoon(days);
     }
 }
