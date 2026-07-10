@@ -8,8 +8,8 @@ import java.util.List;
 
 @Repository
 public interface MedicationRepository extends JpaRepository<Medication,Long> {
-    boolean existsByResidentIdAndName(Long residentId, String name);
+    boolean existsByNursingHomeIdAndNameAndLot(Long nursingHomeId, String name, String lot);
 
-    boolean existsByResidentId(Long residentId);
-    List<Medication> findByResidentId(Long residentId);
+    boolean existsByNursingHomeId(Long nursingHomeId);
+    List<Medication> findByNursingHomeId(Long nursingHomeId);
 }
