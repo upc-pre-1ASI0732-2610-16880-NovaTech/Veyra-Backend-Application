@@ -121,6 +121,7 @@ public class WebSecurityConfiguration {
             "/api/v1/administrators/**",
             "/api/v1/relatives/**",
             "/api/v1/plans",
+            "/api/v1/webhooks/stripe",
             "/v3/api-docs/**",
             "/swagger-ui.html",
             "/swagger-ui/**",
