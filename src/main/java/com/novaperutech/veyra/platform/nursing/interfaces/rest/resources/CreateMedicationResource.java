@@ -20,6 +20,8 @@ public record CreateMedicationResource(
         @NotBlank(message = "Drug presentation is required")
         String drugPresentation,
         @NotBlank(message = "Dosage is required")
-        String dosage
+        String dosage,
+        @NotBlank(message = "Lot is required")
+        String lot
 ) {
 }
