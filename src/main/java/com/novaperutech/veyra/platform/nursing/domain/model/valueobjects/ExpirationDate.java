@@ -14,4 +14,9 @@ public record ExpirationDate(LocalDate expirationDate) {
             throw new IllegalArgumentException(" expiration date cannot be before now");
         }
     }
+
+    public boolean isExpiringSoon(int days) {
+        var today = LocalDate.now();
+        return !expirationDate.isBefore(today) && !expirationDate.isAfter(today.plusDays(days));
+    }
 }

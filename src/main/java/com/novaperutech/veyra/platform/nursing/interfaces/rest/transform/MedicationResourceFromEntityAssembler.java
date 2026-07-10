@@ -6,7 +6,7 @@ import com.novaperutech.veyra.platform.nursing.interfaces.rest.resources.Medicat
 public class MedicationResourceFromEntityAssembler {
     public static MedicationResource toResourceFromEntity(Medication entity)
     {
-        return new MedicationResource(entity.getId(),entity.getResident().getId(),entity.getName(),entity.getDescription()
-        ,entity.getStock().amount(), entity.getExpirationDate().expirationDate(),entity.getDrugPresentation().name(),entity.getDosage());
+        return new MedicationResource(entity.getId(),entity.getNursingHome().getId(),entity.getName(),entity.getDescription()
+        ,entity.getStock().amount(), entity.getExpirationDate().expirationDate(),entity.getDrugPresentation().name(),entity.getDosage(),entity.getLot());
     }
 }

@@ -4,9 +4,9 @@ import com.novaperutech.veyra.platform.nursing.domain.model.commands.CreateMedic
 import com.novaperutech.veyra.platform.nursing.interfaces.rest.resources.CreateMedicationResource;
 
 public class CreateMedicationCommandFromResourceAssembler {
-    public static CreateMedicationCommand toCommandFromResource(CreateMedicationResource resource,Long residentId)
+    public static CreateMedicationCommand toCommandFromResource(CreateMedicationResource resource,Long nursingHomeId)
     {
         return new CreateMedicationCommand
-                (resource.name(),resource.description(),resource.amount(),resource.expirationDate(),resource.drugPresentation(),resource.dosage(),residentId);
+                (resource.name(),resource.description(),resource.amount(),resource.expirationDate(),resource.drugPresentation(),resource.dosage(),resource.lot(),nursingHomeId);
     }
 }

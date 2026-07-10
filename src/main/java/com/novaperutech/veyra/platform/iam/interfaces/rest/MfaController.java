@@ -1,7 +1,9 @@
 package com.novaperutech.veyra.platform.iam.interfaces.rest;
 
 import com.novaperutech.veyra.platform.iam.domain.model.commands.*;
+import com.novaperutech.veyra.platform.iam.domain.model.queries.GetUserByUsernameQuery;
 import com.novaperutech.veyra.platform.iam.domain.services.UserCommandService;
+import com.novaperutech.veyra.platform.iam.domain.services.UserQueryService;
 import com.novaperutech.veyra.platform.iam.infrastructure.totp.TotpService;
 import com.novaperutech.veyra.platform.iam.interfaces.rest.resources.*;
 import com.novaperutech.veyra.platform.iam.interfaces.rest.transform.AuthenticatedUserResourceFromEntityAssembler;
@@ -23,11 +25,28 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class MfaController {
 
     private final UserCommandService userCommandService;
+    private final UserQueryService userQueryService;
     private final TotpService totpService;
 
-    public MfaController(UserCommandService userCommandService, TotpService totpService) {
+    public MfaController(UserCommandService userCommandService, UserQueryService userQueryService, TotpService totpService) {
         this.userCommandService = userCommandService;
+        this.userQueryService = userQueryService;
         this.totpService = totpService;
+    }
+
+    @GetMapping("/status")
+    @Operation(
+            summary = "Get current MFA status",
+            description = "Returns whether MFA is enabled for the authenticated user and which method (TOTP/SMS) is active."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Status retrieved"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<MfaStatusResource> getStatus(@AuthenticationPrincipal UserDetails principal) {
+        var user = userQueryService.handle(new GetUserByUsernameQuery(principal.getUsername()))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(new MfaStatusResource(user.isMfaEnabled(), user.getMfaMethod().name()));
     }
 
     @PostMapping("/setup")
@@ -46,10 +65,32 @@ public class MfaController {
         return ResponseEntity.ok(new MfaSetupResponseResource(secret, otpAuthUrl));
     }
 
+    @PostMapping("/sms/setup")
+    @Operation(
+            summary = "Initialize SMS MFA setup",
+            description = "Stores the phone number and sends the first SMS verification code. " +
+                    "MFA is NOT active yet — confirm by calling /mfa/enable with the received code."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Code sent"),
+            @ApiResponse(responseCode = "400", description = "Invalid phone number"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<?> setupSmsMfa(@AuthenticationPrincipal UserDetails principal,
+                                         @Valid @RequestBody SetupSmsMfaResource resource) {
+        try {
+            var user = userCommandService.handle(new SetupSmsMfaCommand(principal.getUsername(), resource.phoneNumber()));
+            if (user.isEmpty()) return ResponseEntity.badRequest().build();
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/enable")
     @Operation(
             summary = "Activate MFA",
-            description = "Confirms MFA activation by verifying the first TOTP code from the authenticator app."
+            description = "Confirms MFA activation by verifying the first TOTP or SMS code."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "MFA activated"),

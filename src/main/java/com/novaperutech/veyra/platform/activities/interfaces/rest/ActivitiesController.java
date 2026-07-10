@@ -9,6 +9,7 @@ import com.novaperutech.veyra.platform.activities.interfaces.rest.resources.Crea
 import com.novaperutech.veyra.platform.activities.interfaces.rest.transform.ActivityResourceFromViewAssembler;
 import com.novaperutech.veyra.platform.activities.interfaces.rest.transform.CreateActivityCommandFromResourceAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +54,7 @@ public class ActivitiesController {
     @PostMapping
     public ResponseEntity<ActivityResource> createActivity(
             @PathVariable Long nursingHomeId,
-            @RequestBody CreateActivityResource resource) {
+            @Valid @RequestBody CreateActivityResource resource) {
 
         var command = CreateActivityCommandFromResourceAssembler.toCommandFromResource(resource, nursingHomeId);
         var activityId = activityCommandService.handle(command);
