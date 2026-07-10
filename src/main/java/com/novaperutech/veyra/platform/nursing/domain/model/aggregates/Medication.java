@@ -16,6 +16,7 @@ import com.novaperutech.veyra.platform.nursing.domain.model.valueobjects.DrugPre
 import com.novaperutech.veyra.platform.nursing.domain.model.valueobjects.ExpirationDate;
 import com.novaperutech.veyra.platform.nursing.domain.model.valueobjects.Stock;
 import com.novaperutech.veyra.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
+import com.novaperutech.veyra.platform.shared.infrastructure.persistence.jpa.converters.EncryptedStringConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -25,7 +26,10 @@ public class Medication extends AuditableAbstractAggregateRoot<Medication> {
 
     private final int LOW_STOCK_THRESHOLD = 15;
 
-    @Column(nullable = false)
+    // Encrypted at rest: treatment/medical notes (US38). Not used in any equality query, so
+    // the randomized IV per encryption is safe here (unlike `name`/`lot`, used for duplicate checks).
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
@@ -37,7 +41,9 @@ public class Medication extends AuditableAbstractAggregateRoot<Medication> {
     @Embedded
     private ExpirationDate expirationDate;
 
-    @Column(nullable = false)
+    // Encrypted at rest: dosage/administration instructions (US38).
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String dosage;
 
     @Column(nullable = false)
