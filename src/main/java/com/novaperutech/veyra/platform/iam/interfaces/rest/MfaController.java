@@ -1,6 +1,7 @@
 package com.novaperutech.veyra.platform.iam.interfaces.rest;
 
 import com.novaperutech.veyra.platform.iam.domain.model.commands.*;
+import com.novaperutech.veyra.platform.iam.domain.model.queries.GetUserByIdQuery;
 import com.novaperutech.veyra.platform.iam.domain.model.queries.GetUserByUsernameQuery;
 import com.novaperutech.veyra.platform.iam.domain.services.UserCommandService;
 import com.novaperutech.veyra.platform.iam.domain.services.UserQueryService;
@@ -124,19 +125,22 @@ public class MfaController {
 
     @PostMapping("/verify")
     @Operation(
-            summary = "Verify TOTP code during sign-in",
-            description = "Called after a sign-in that returned mfaRequired=true. Validates the TOTP code and returns the JWT token."
+            summary = "Verify TOTP/SMS code during sign-in",
+            description = "Called after a sign-in that returned mfaRequired=true. Validates the code and returns the same " +
+                    "authenticated-user resource shape as sign-in (id, username, roles, token), so the client can fully " +
+                    "restore session state without relying on stale data from before the MFA challenge."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "TOTP verified — JWT returned"),
-            @ApiResponse(responseCode = "400", description = "Invalid TOTP code")
+            @ApiResponse(responseCode = "200", description = "Code verified — authenticated user resource returned"),
+            @ApiResponse(responseCode = "400", description = "Invalid code")
     })
     public ResponseEntity<?> verifyMfa(@Valid @RequestBody MfaVerifyResource resource) {
         try {
             var token = userCommandService.handle(new VerifyMfaCommand(resource.userId(), resource.code()));
             if (token.isEmpty()) return ResponseEntity.badRequest().build();
-            record TokenResponse(String token) {}
-            return ResponseEntity.ok(new TokenResponse(token.get()));
+            var user = userQueryService.handle(new GetUserByIdQuery(resource.userId()))
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            return ResponseEntity.ok(AuthenticatedUserResourceFromEntityAssembler.toResourceFromEntity(user, token.get()));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
